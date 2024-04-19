@@ -75,7 +75,13 @@ def go(fn):
 
         # Get product price
         product_price = product.find('h4').text.strip()
-        product_prices.append(product_price)
+        # second_index = product_price.find('$', product_price.find('$') + 1)
+        second_index = product_price.find('$', product_price.find('$') + 1)
+        if second_index!=-1:
+            product_prices.append(product_price[:second_index])
+        else:
+            product_prices.append(product_price)
+        # product_prices.append(product_price)
 
         # Get product URL
         product_url = product.find('a')['href']
@@ -87,7 +93,8 @@ def go(fn):
 
         # Get Sold Out Status
         if product.find('div'):
-            product_avail = [status.text.strip() for status in product.find_all('div')]
+            templist = [status.text.strip() for status in product.find_all('div')]
+            product_avail = ' - '.join(templist)
         else:
             product_avail = 'Available'
         product_sold_out.append(product_avail)
@@ -105,7 +112,7 @@ def go(fn):
         'URL': product_urls,
         'Image': product_images
     })
-    df.sort_values(by=['Category','Name'],inplace=True)
+    df.sort_values(by=['Category', 'SoldOut?', 'Name'],inplace=True)
     df.to_csv('test.csv', index=False)
 
     # Display DataFrame
