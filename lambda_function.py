@@ -11,7 +11,7 @@ BUCKET = 'scraping-example'
 URL = 'https://www.google.com/search?q='
 
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0',
+    'User-Agent': 'Mozilla/5.0 (compatable: CronSearchExample/1.0; +https://public-info-example.s3.us-east-2.amazonaws.com/bot.html)',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.5',
     'Accept-Encoding': 'gzip, deflate',
@@ -38,5 +38,6 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
-        'body': json.dumps('success')
+        'body': json.dumps('success'),
+        'file': key
     }
