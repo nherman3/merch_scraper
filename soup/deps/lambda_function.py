@@ -73,35 +73,48 @@ def lambda_handler(event,context):
         # Get product image URL
         product_image = product.find('img')['src']
         product_image = 'https:' + re.sub('_large', '', product_image)
+        product_id = re.sub('_large', '', product_image)[-10:]
 
-        # response = table.put_item(Item={'id': product_name,
-        #                      'Category': product_type,
-        #                      'Price': product_price,
-        #                      'SoldOut?': product_avail,
-        #                      'URL': product_url,
-        #                      'Image': product_image
-        #                      })
+        # Check if the item exists
+        existing_item = table.get_item(Key={'id': product_id})
 
-        new_items_added = False
-        try:
-            response = table.put_item(
-                Item={
-                    'id': product_name,
-                    'Category': product_type,
-                    'Price': product_price,
-                    'SoldOut?': product_avail,
-                    'URL': product_url,
-                    'Image': product_image
+        if 'Item' in existing_item:
+            # If item exists, update it
+            update_response = table.update_item(
+                Key={'id': product_id},
+                UpdateExpression="set #P = :p, #A = :a",
+                ExpressionAttributeNames={
+                    '#P': 'Price',
+                    '#A': 'Availability'  # Using an expression attribute name for special character handling
                 },
-                ConditionExpression='attribute_not_exists(id)'
+                ExpressionAttributeValues={
+                    ':p': product_price,
+                    ':a': product_avail
+                },
+                ReturnValues="UPDATED_NEW"
             )
-            new_items_added = True
-        except dynamodb.meta.client.exceptions.ConditionalCheckFailedException:
-            # This exception means the item already exists and wasn't added
-            print(f"{product_name_full} already exists and was not added.")
+        else:
+            # If the item does not exist, add it and send a notification
+            try:
+                response = table.put_item(
+                    Item={
+                        'id': product_id,
+                        '_Name': product_name,
+                        'Category': product_type,
+                        'Price': product_price,
+                        'Availability': product_avail,
+                        'URL': product_url,
+                        'Image': product_image
+                    },
+                    ConditionExpression='attribute_not_exists(id)'
+                )
+                # Send notification for new item
+                send_notification(f'New {product_type}: {product_name} has been posted\n\n{product_url} ')
 
-        if new_items_added:
-            send_notification(f'{product_type} {product_name} is now {product_avail}')
+            except dynamodb.meta.client.exceptions.ConditionalCheckFailedException:
+                # This exception means the item already exists
+                # Normally this shouldn't occur due to the earlier check
+                pass
 
     return {
         'statusCode': 200,
