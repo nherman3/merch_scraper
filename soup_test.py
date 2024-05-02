@@ -1,3 +1,7 @@
+''' This is the code used to test my web scraper.
+This was also done in the jupyter notebook.
+See the lambda functions for the final versions '''
+
 import json
 from bs4 import BeautifulSoup
 import requests
